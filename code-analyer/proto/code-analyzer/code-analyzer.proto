@@ -1,0 +1,47 @@
+syntax="proto3";
+
+package codeanalyzer;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+
+// Defines the import path that should be used to import the generated package,
+// and the package name.
+option go_package = "code-analyzer/protoc;";
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    version: "0.1";
+  };
+  external_docs: {
+    url: "code-analyzer";
+    description: "gRPC-gateway boilerplate repository";
+  }
+  schemes: HTTP;
+};
+
+service CodeAnalyzerService {
+  rpc HealthCheck(Empty) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/api/code-analyzer/health-check"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Health check"
+      description: "Microservice Status Report"
+      tags: "Health"
+    };
+  }
+}
+ 
+message Empty {}
+
+message HealthCheckResponse {
+  string health = 1;
+  string dbhealth = 2;
+  string host = 3;
+  string port = 4;
+  string dbhost = 5;
+  string dbport = 6;
+}
