@@ -33,8 +33,30 @@ service CodeAnalyzerService {
       tags: "Health"
     };
   }
+  
+  rpc AnalyzeUploader(stream UploadRequest) returns (UploadResponse) {
+    option (google.api.http) = {
+      get: "/api/code-analyzer/upload"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Streaming file for analyzing"
+      description: "Uploader for code analyzer"
+      tags: "upload"
+    };
+  }
+
+  rpc FileUpload(FileUploadRequest) returns (FileUploadResponse) {
+    option (google.api.http) = {
+      get: "/api/code-analyzer/upload/file"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "upload file for analyzing"
+      description: "Uploader for code analyzer"
+      tags: "upload"
+    };
+  }
 }
- 
+
 message Empty {}
 
 message HealthCheckResponse {
@@ -44,4 +66,39 @@ message HealthCheckResponse {
   string port = 4;
   string dbhost = 5;
   string dbport = 6;
+}
+
+message UploadRequest {
+  bytes chunk = 1;
+  string name = 2;
+  string report_id = 4;
+  uint32 repo_id = 5;
+  string commit_id = 6;
+  string queue_at = 7;
+}
+
+message UploadResponse {
+  string name = 1;
+}
+
+message FileUploadRequest {
+  string mime = 1;
+  string base64 = 2;
+  string name = 3;
+  string report_id = 4;
+  uint32 repo_id = 5;
+  string commit_id = 6;
+  string queue_at = 7;
+}
+
+
+message FileUploadResponse {
+  message Data {
+    string name = 1;
+  }
+  
+  string status = 1;
+  string code = 2;
+  string message = 3;
+  Data data = 4;
 }

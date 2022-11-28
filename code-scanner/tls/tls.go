@@ -11,12 +11,12 @@ import (
 )
 
 func LoadTLSCredentials() (credentials.TransportCredentials, error) {
-	certFile := os.Getenv("TLS_CERT_FILE")
-	clientCertFile := os.Getenv("TLS_CLIENT_CERT_FILE")
-	clientKeyCertFile := os.Getenv("TLS_CLIENT_CERT_KEY_FILE")
+	serverCertFile := os.Getenv("TLS_CERT_FILE")
+	CertFilePath := os.Getenv("TLS_CLIENT_CERT_FILE")
+	KeyCertFilePath := os.Getenv("TLS_CLIENT_CERT_KEY_FILE")
 
 	// Load certificate of the CA who signed server's certificate
-	pemServerCA, err := ioutil.ReadFile(certFile)
+	pemServerCA, err := ioutil.ReadFile(serverCertFile)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func LoadTLSCredentials() (credentials.TransportCredentials, error) {
 	}
 
 	// Load client's certificate and private key
-	clientCert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyCertFile)
+	clientCert, err := tls.LoadX509KeyPair(CertFilePath, KeyCertFilePath)
 	if err != nil {
 		return nil, err
 	}

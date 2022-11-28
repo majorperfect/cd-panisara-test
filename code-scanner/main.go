@@ -9,20 +9,26 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/majorperfect/guardrails-test/code-scanner/connection"
+	"github.com/majorperfect/guardrails-test/code-scanner/internal"
+
 	"github.com/gorilla/mux"
 	"github.com/majorperfect/guardrails-test/code-scanner/config"
-	"github.com/majorperfect/guardrails-test/code-scanner/internal"
+	"github.com/majorperfect/guardrails-test/code-scanner/internal/upload"
 )
 
 func main() {
 	cfg := config.SetupConfig()
 	r := mux.NewRouter()
-	r.HandleFunc("/", internal.Scanner()).Methods(http.MethodPost)
+	// r.HandleFunc("/", internal.Scanner()).Methods(http.MethodPost)
 
 	httpServer := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
 		Handler: r,
 	}
+
+	r.HandleFunc("/upload", upload.NewPostUploadHandler(
+		internal.Scanner(internal.ScanFiles(internal.GoScanFiles(connection.CodeAnalyzerMicroservice(cfg)))))).Methods(http.MethodPost)
 
 	idleConnectionClosed := make(chan struct{}, 1)
 	go func() {

@@ -23,6 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CodeAnalyzerServiceClient interface {
 	HealthCheck(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	AnalyzeUploader(ctx context.Context, opts ...grpc.CallOption) (CodeAnalyzerService_AnalyzeUploaderClient, error)
+	FileUpload(ctx context.Context, in *FileUploadRequest, opts ...grpc.CallOption) (*FileUploadResponse, error)
 }
 
 type codeAnalyzerServiceClient struct {
@@ -42,11 +44,56 @@ func (c *codeAnalyzerServiceClient) HealthCheck(ctx context.Context, in *Empty, 
 	return out, nil
 }
 
+func (c *codeAnalyzerServiceClient) AnalyzeUploader(ctx context.Context, opts ...grpc.CallOption) (CodeAnalyzerService_AnalyzeUploaderClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CodeAnalyzerService_ServiceDesc.Streams[0], "/codeanalyzer.CodeAnalyzerService/AnalyzeUploader", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &codeAnalyzerServiceAnalyzeUploaderClient{stream}
+	return x, nil
+}
+
+type CodeAnalyzerService_AnalyzeUploaderClient interface {
+	Send(*UploadRequest) error
+	CloseAndRecv() (*UploadResponse, error)
+	grpc.ClientStream
+}
+
+type codeAnalyzerServiceAnalyzeUploaderClient struct {
+	grpc.ClientStream
+}
+
+func (x *codeAnalyzerServiceAnalyzeUploaderClient) Send(m *UploadRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *codeAnalyzerServiceAnalyzeUploaderClient) CloseAndRecv() (*UploadResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(UploadResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *codeAnalyzerServiceClient) FileUpload(ctx context.Context, in *FileUploadRequest, opts ...grpc.CallOption) (*FileUploadResponse, error) {
+	out := new(FileUploadResponse)
+	err := c.cc.Invoke(ctx, "/codeanalyzer.CodeAnalyzerService/FileUpload", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CodeAnalyzerServiceServer is the server API for CodeAnalyzerService service.
 // All implementations must embed UnimplementedCodeAnalyzerServiceServer
 // for forward compatibility
 type CodeAnalyzerServiceServer interface {
 	HealthCheck(context.Context, *Empty) (*HealthCheckResponse, error)
+	AnalyzeUploader(CodeAnalyzerService_AnalyzeUploaderServer) error
+	FileUpload(context.Context, *FileUploadRequest) (*FileUploadResponse, error)
 	mustEmbedUnimplementedCodeAnalyzerServiceServer()
 }
 
@@ -56,6 +103,12 @@ type UnimplementedCodeAnalyzerServiceServer struct {
 
 func (UnimplementedCodeAnalyzerServiceServer) HealthCheck(context.Context, *Empty) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
+}
+func (UnimplementedCodeAnalyzerServiceServer) AnalyzeUploader(CodeAnalyzerService_AnalyzeUploaderServer) error {
+	return status.Errorf(codes.Unimplemented, "method AnalyzeUploader not implemented")
+}
+func (UnimplementedCodeAnalyzerServiceServer) FileUpload(context.Context, *FileUploadRequest) (*FileUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FileUpload not implemented")
 }
 func (UnimplementedCodeAnalyzerServiceServer) mustEmbedUnimplementedCodeAnalyzerServiceServer() {}
 
@@ -88,6 +141,50 @@ func _CodeAnalyzerService_HealthCheck_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CodeAnalyzerService_AnalyzeUploader_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CodeAnalyzerServiceServer).AnalyzeUploader(&codeAnalyzerServiceAnalyzeUploaderServer{stream})
+}
+
+type CodeAnalyzerService_AnalyzeUploaderServer interface {
+	SendAndClose(*UploadResponse) error
+	Recv() (*UploadRequest, error)
+	grpc.ServerStream
+}
+
+type codeAnalyzerServiceAnalyzeUploaderServer struct {
+	grpc.ServerStream
+}
+
+func (x *codeAnalyzerServiceAnalyzeUploaderServer) SendAndClose(m *UploadResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *codeAnalyzerServiceAnalyzeUploaderServer) Recv() (*UploadRequest, error) {
+	m := new(UploadRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _CodeAnalyzerService_FileUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CodeAnalyzerServiceServer).FileUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/codeanalyzer.CodeAnalyzerService/FileUpload",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CodeAnalyzerServiceServer).FileUpload(ctx, req.(*FileUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CodeAnalyzerService_ServiceDesc is the grpc.ServiceDesc for CodeAnalyzerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -99,7 +196,17 @@ var CodeAnalyzerService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "HealthCheck",
 			Handler:    _CodeAnalyzerService_HealthCheck_Handler,
 		},
+		{
+			MethodName: "FileUpload",
+			Handler:    _CodeAnalyzerService_FileUpload_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "AnalyzeUploader",
+			Handler:       _CodeAnalyzerService_AnalyzeUploader_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "code-analyzer/code-analyzer.proto",
 }

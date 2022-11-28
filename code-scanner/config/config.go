@@ -10,10 +10,12 @@ import (
 )
 
 type Config struct {
-	Host   string `mapstructure:"server_host"`
-	Port   string `mapstructure:"server_port"`
-	DBHost string `mapstructure:"db_host"`
-	DBPort string `mapstructure:"db_port"`
+	Host       string `mapstructure:"server_host"`
+	Port       string `mapstructure:"server_port"`
+	ServerHost string `mapstructure:"analyzer_host"`
+	ServerPort string `mapstructure:"analyzer_port"`
+	DBHost     string `mapstructure:"db_host"`
+	DBPort     string `mapstructure:"db_port"`
 }
 
 func SetupConfig() *Config {
@@ -35,6 +37,8 @@ func SetupConfig() *Config {
 	os.Setenv("DB_PORT", cfg.DBPort)
 	os.Setenv("SERVER_HOST", cfg.Host)
 	os.Setenv("SERVER_PORT", cfg.Port)
+	os.Setenv("ANALYZER_HOST", cfg.ServerHost)
+	os.Setenv("ANALYZER_PORT", cfg.ServerPort)
 
 	// TLS certificate
 	os.Setenv("TLS_CERT_FILE", viper.GetString("TLS_CERT_FILE"))
